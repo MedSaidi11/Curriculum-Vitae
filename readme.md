@@ -317,7 +317,7 @@ We prepared the needed files to deploy our app successfully:
 
 - model.pkl : contains all models that were built that used for prediction.
 
-- model\_ROI.pkl: contains the train data of the modeling part that will be used to rate of investment.
+- model2.pkl: contains the train data of the modeling part that will be used to rate of investment.
 
 Finally, you can access our app by following this [https://demoloanapp.herokuapp.com/](https://demoloanapp.herokuapp.com/)
 
