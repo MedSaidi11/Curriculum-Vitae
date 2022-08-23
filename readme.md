@@ -1,15 +1,10 @@
 # **PROJECT REPORT (TEAM-A)**
 
 **Saidi Mohamed (** **Team Lead)**
-
 **Aruneshwar N (Co-Team** **Lead)**
-
 **Muskan Dalal**
-
 **Vinay Kumar Kushwaha**
-
 **Rozmin Nisar Waghu**
-
 **Suman Gautam**
 
 **TOPIC**
@@ -47,6 +42,12 @@ We will impute the missing values with KNN or mean for numerical values while mo
 We will select some necessary variables which are important for finding Loan status by relating to the high correlation with them and drop other variables which are not important.
 
 Loan Status has to Encode all completed loans as 1, and all delinquent, charged-off, cancelled and defaulted loans as 0.
+```
+from sklearn.impute import SimpleImputer
+imp = SimpleImputer(missing_values=np.nan, strategy="mean")
+imp.fit(df_n)
+df_num_imputed = imp.transform(df_n)
+```
 
 **EDA (EXPLORATORY DATA ANALYSIS)**
 
@@ -84,8 +85,14 @@ ANS. Prosper Score is worth for credit borrowing rate. As Prosper Score is 1.0 f
 
 **FEATURE ENGINEERING:**
 
-Selected some variables for feature engineering. Features are separated into two parts for categorical and numerical variables types.
+Selected some variables for feature engineering using lightgbm for feature importance. Features are separated into two parts for categorical and numerical variables types.
 
+```
+gbm.booster_.feature_importance()
+fea_imp_ = pd.DataFrame({'cols':X1.columns, 'fea_imp':gbm.feature_importances_})
+fea_imp_sorted = fea_imp_.loc[fea_imp_.fea_imp > 0].sort_values(by=['fea_imp'], ascending = True)
+fea_imp_sorted
+```
 **#Data Pre-processing through Onehotencoder and column transformer for numerical features:**
 
 The next process outlined demonstrates to one-hot encode a single column. Sklearn comes with a helper function, make\_column\_transformer() which aids in the transformations of columns. The function generates ColumnTransformer objects for you and handles the transformations for the numerical features.
@@ -93,6 +100,17 @@ The next process outlined demonstrates to one-hot encode a single column. Sklear
 **# Data Pre-processing through Labelencoder for categorical features:**
 
 Label Encoding in Python can be achieved using Sklearn Library. Sklearn provides a very efficient tool for encoding the levels of categorical features into numeric values. LabelEncoder encode labels with a value between 0 and n\_classes-1 where n is the number of distinct labels. If a label repeats it assigns the same value to as assigned earlier.
+```
+from sklearn.preprocessing import LabelEncoder
+cat_list = [] 
+num_list = []
+for colname, colvalue in df_c.iteritems():
+        cat_list.append(colname)
+for col in cat_list:
+    encoder = LabelEncoder()
+    encoder.fit(df_c[col])
+    df_c[col] = encoder.transform(df_c[col])
+```
 
 **#StandardScalar:**
 
@@ -119,48 +137,29 @@ We will divide the X as independent variables from features and y as dependent v
 Accuracy: What proportion of actual positives and negatives is correctly classified?
 
 Root Mean Square Error (RMSE) : RMSE is the square root of the value obtained from the Mean Square Error between the estimated and actual values of a parameter of the model.
-
+```
 from sklearn.linear\_model import LogisticRegression
-
 from sklearn.metrics import mean\_squared\_error,accuracy\_score
-
 df\_models = pd.DataFrame(columns=['model', 'run\_time', 'rmse', 'rmse\_cv','acc'])
-
 print('\*',"LogisticRegression")
-
 start\_time = time.time()
-
 regressor = LogisticRegression()
-
 model = regressor.fit(X\_train, y\_train)
-
 y\_pred = model.predict(X\_valid)
-
 scores = cross\_val\_score(model,
-
 X\_train,
-
 y\_train,
-
 scoring="neg\_mean\_squared\_error",
-
 cv=5)
-
 row = {'model': "LogisticRegression",
-
 'run\_time': format(round((time.time() - start\_time)/60,2)),
-
 'rmse': np.sqrt(mean\_squared\_error(y\_valid, y\_pred)),
-
 'rmse\_cv': np.mean(np.sqrt(-scores)),
-
 'acc': np.mean(accuracy\_score(y\_valid,y\_pred))
-
 }
-
 df\_models = df\_models.append(row, ignore\_index=True)
-
 df\_models.head().sort\_values(by='rmse\_cv', ascending=True)
+```
 
 **Result based on Logistic regression:**
 
@@ -179,58 +178,40 @@ The tree contains decision nodes and leaf nodes.
 
 - Decision nodes are those nodes represent the value of the input variable(x). It has two or more than two branches.
 - Leaf nodes contain the decision or the output variable(y).
-
+```
 from sklearn.tree import DecisionTreeClassifier
-
 from sklearn.metrics import mean\_squared\_error,accuracy\_score
-
 regressors = { "DecisionTreeClassifier": DecisionTreeClassifier(criterion='entropy') }
-
 df\_models = pd.DataFrame(columns=['model', 'run\_time', 'rmse', 'rmse\_cv'])
-
 for key in regressors:
-
 print('\*',key)
-
 start\_time = time.time()
-
 regressor = regressors[key]
-
 model = regressor.fit(X\_train, y\_train)
-
 y\_pred = model.predict(X\_test)
-
 scores = cross\_val\_score(model,
-
 X\_train,
-
 y\_train,
-
 scoring="neg\_mean\_squared\_error",
-
 cv=5)
-
 row = {'model': key,
-
 'run\_time': format(round((time.time() - start\_time)/60,2)),
-
 'rmse': np.sqrt(mean\_squared\_error(y\_test, y\_pred)),
-
 'rmse\_cv': np.mean(np.sqrt(-scores)),
-
 'accuracy': np.mean(accuracy\_score(y\_test,y\_pred))
-
 }
-
 df\_models = df\_models.append(row, ignore\_index=True)
-
 df\_models.head().sort\_values(by='rmse\_cv', ascending=True)
+```
 
 **Result based on Decision tree classifier:**
 
 | Model | run\_time | rmse | rmse\_cv | accuracy |
 | --- | --- | --- | --- | --- |
 | DecisionTreeClassifier | 0.14 | 0.071349 | 0.074635 | 0.994909 |
+| Logistic Regression    | 0.50 | 0.061808 | 0.084635 | 0.996354 |
+| Gaussian NB | 0.70 | 0.077774 | 0.077974 | 0.994081 |
+
 
 **Naïve Bayes Classifier model:**
 
@@ -257,32 +238,21 @@ Here we will use Gaussian naïve Bayes model for modeling. When we have continuo
 
 We dropped some features and use the (feat) variables given below to increase accuracy for the Naïve Bayes model which has higher correlations with the Loan status variable. Again we will do data preprocessing and columns transformer using Labelcoder and Onehotcoder.
 
+```
 feat = data[['Term', 'LoanOriginalAmount','BorrowerAPR', 'BorrowerRate', 'LenderYield', 'LoanStatus' , 'BankcardUtilization' , 'IncomeRange', 'StatedMonthlyIncome', 'EmploymentStatus', 'BorrowerState', 'DebtToIncomeRatio' , 'ProsperRating (Alpha)', 'ProsperScore', 'CreditGrade']]
-
 from sklearn.model\_selection import train\_test\_split
-
 X\_train, X\_test, y\_train, y\_test = train\_test\_split(x, y, test\_size = 0.3, random\_state = 42)
-
 from sklearn.naive\_bayes import GaussianNB
-
 gnb = GaussianNB()
-
 gnb.fit(X\_train, y\_train)
-
 y\_pred = gnb.predict(X\_test)
-
 from sklearn.metrics import classification\_report
-
 print(classification\_report(y\_test, y\_pred))
-
 from sklearn.metrics import accuracy\_score
-
 print('Model accuracy score: {:.2f}%' .format(accuracy\_score(y\_test, y\_pred)\*100))
-
 from sklearn.metrics import confusion\_matrix
-
 cm = confusion\_matrix(y\_test, y\_pred)
-
+```
 **Result based on Naïve bayes model :**
 
 #Model evaluation
@@ -295,11 +265,6 @@ cm = confusion\_matrix(y\_test, y\_pred)
 | --- | --- | --- | --- | --- |
 | 0 | 0.39 | 0.45 | 0.42 | 5735 |
 | 1 | 0.89 | 0.86 | 0.87 | 28447 |
-| accuracy |
- |
- | 0.79 | 34182 |
-| macro avg | 0.64 | 0.66 | 0.65 | 34182 |
-| weighted avg | 0.80 | 0.79 | 0.80 | 34182 |
 
 From accuracy score metrics we found that, the Naïve Bayes Model accuracy score: 79.01%
 
@@ -349,4 +314,5 @@ We prepared the needed files to deploy our app successfully:
 
 - model\_ROI.pkl: contains the train data of the modeling part that will be used to rate of investment.
 
-Finally, you can access our app by following this [https://loan-status-prediction-app-ver.herokuapp.com/](https://loan-status-prediction-app-ver.herokuapp.com/)
+Finally, you can access our app by following this [https://demoloanapp.herokuapp.com/](https://demoloanapp.herokuapp.com/)
+
